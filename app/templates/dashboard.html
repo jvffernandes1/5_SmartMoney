@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>Dashboard</h2>
+<p>Bem-vindo, {{ current_user.username }}!</p>
+
+<button id="abrir-form" style="margin-bottom:1rem;">Cadastrar novo evento</button>
+<form id="form-lancamento" method="post" action="/add_entry" style="display:none; margin-bottom:2rem; background:var(--cor-secundaria); padding:1rem; border-radius:8px;">
+    <div style="margin-bottom:1rem;">
+        <label for="descricao" style="display:block; margin-bottom:0.5rem; color:var(--cor-texto);">Descrição:</label>
+        <input type="text" id="descricao" name="descricao" required style="width:100%; padding:0.5rem; border:1px solid var(--cor-destaque); border-radius:4px; background:var(--cor-principal); color:var(--cor-texto); font-family:'Merriweather Sans', sans-serif;">
+    </div>
+    <div style="margin-bottom:1rem;">
+        <label for="valor" style="display:block; margin-bottom:0.5rem; color:var(--cor-texto);">Valor:</label>
+        <input type="text" id="valor" name="valor" required style="width:100%; padding:0.5rem; border:1px solid var(--cor-destaque); border-radius:4px; background:var(--cor-principal); color:var(--cor-texto); font-family:'Merriweather Sans', sans-serif;" placeholder="R$ 0,00">
+    </div>
+    <div style="margin-bottom:1rem;">
+        <label for="categoria" style="display:block; margin-bottom:0.5rem; color:var(--cor-texto);">Categoria:</label>
+        <select id="categoria" name="categoria" required style="width:100%; padding:0.5rem; border:1px solid var(--cor-destaque); border-radius:4px; background:var(--cor-principal); color:var(--cor-texto); font-family:'Merriweather Sans', sans-serif;">
+            <option value="Lazer">Lazer</option>
+            <option value="Alimentação">Alimentação</option>
+            <option value="Contas">Contas</option>
+            <option value="Salário">Salário</option>
+            <option value="Recebidos">Recebidos</option>
+            <option value="Outros">Outros</option>
+        </select>
+    </div>
+    <div style="margin-bottom:1rem;">
+        <label for="tipo" style="display:block; margin-bottom:0.5rem; color:var(--cor-texto);">Tipo:</label>
+        <select id="tipo" name="tipo" required style="width:100%; padding:0.5rem; border:1px solid var(--cor-destaque); border-radius:4px; background:var(--cor-principal); color:var(--cor-texto); font-family:'Merriweather Sans', sans-serif;">
+            <option value="receita">Receita</option>
+            <option value="despesa">Despesa</option>
+        </select>
+    </div>
+    <div style="margin-bottom:1rem;">
+        <label for="data" style="display:block; margin-bottom:0.5rem; color:var(--cor-texto);">Data:</label>
+        <input type="date" id="data" name="data" required style="width:100%; padding:0.5rem; border:1px solid var(--cor-destaque); border-radius:4px; background:var(--cor-principal); color:var(--cor-texto); font-family:'Merriweather Sans', sans-serif;">
+    </div>
+    <input type="submit" value="Cadastrar" style="background:var(--cor-destaque); color:var(--cor-texto); border:none; padding:0.5rem 1rem; border-radius:4px; cursor:pointer; font-family:'Merriweather Sans', sans-serif;">
+</form>
+
+<div style="display: flex; gap: 2rem; flex-wrap: wrap; align-items: flex-start;">
+    <div style="flex:1; min-width: 320px;">
+        <canvas id="barChart" height="200"></canvas>
+        <div id="total-indicador" style="font-size:1.2rem; margin-top:1rem;"></div>
+    </div>
+    <div style="flex:1; min-width: 320px;">
+        <canvas id="pieChart" height="200"></canvas>
+    </div>
+</div>
+<h3 style="margin-top:2rem;">Lançamentos</h3>
+<div style="overflow-x:auto;">
+<table style="width:100%; border-collapse:collapse; background:var(--cor-secundaria); color:var(--cor-texto); font-family:'Merriweather Sans', sans-serif;">
+    <thead>
+        <tr style="background:var(--cor-menu);">
+            <th style="padding:0.5rem; border:1px solid var(--cor-destaque);">Descrição</th>
+            <th style="padding:0.5rem; border:1px solid var(--cor-destaque);">Valor</th>
+            <th style="padding:0.5rem; border:1px solid var(--cor-destaque);">Categoria</th>
+            <th style="padding:0.5rem; border:1px solid var(--cor-destaque);">Tipo</th>
+            <th style="padding:0.5rem; border:1px solid var(--cor-destaque);">Data</th>
+            <th style="padding:0.5rem; border:1px solid var(--cor-destaque);">Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in entries %}
+        <tr>
+            <td style="padding:0.5rem; border:1px solid var(--cor-destaque);">{{ entry.descricao }}</td>
+            <td class="{{ 'valor-despesa' if entry.tipo == 'despesa' else 'valor-receita' }}" style="padding:0.5rem; border:1px solid var(--cor-destaque);">R$ {{ entry.valor }}</td>
+            <td style="padding:0.5rem; border:1px solid var(--cor-destaque);">{{ entry.categoria }}</td>
+            <td style="padding:0.5rem; border:1px solid var(--cor-destaque);">{{ entry.tipo|capitalize }}</td>
+            <td style="padding:0.5rem; border:1px solid var(--cor-destaque);">{{ entry.data.strftime('%d/%m/%Y') if entry.data else '' }}</td>
+            <td style="padding:0.5rem; border:1px solid var(--cor-destaque);"><button onclick="deleteEntry('{{ entry._id }}')" style="background:#e53935; color:white; border:none; padding:0.3rem 0.5rem; border-radius:4px; cursor:pointer;">🗑️</button></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="padding:0.5rem; border:1px solid var(--cor-destaque);">Nenhum lançamento encontrado.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+<style>
+.valor-despesa { color: #e53935 !important; }
+.valor-receita { color: #4caf50 !important; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    window.dashboardData = {{ dashboard_data|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+// Acessibilidade: abrir/fechar formulário e foco no primeiro campo
+const btn = document.getElementById('abrir-form');
+const form = document.getElementById('form-lancamento');
+btn.addEventListener('click', () => {
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    if(form.style.display === 'block') {
+        form.descricao.focus();
+    }
+});
+form.addEventListener('submit', (e) => {
+    // Limpar valor para enviar como número
+    let valor = valorInput.value.replace('R$ ', '').replace('.', '').replace(',', '.');
+    valorInput.value = valor;
+    setTimeout(() => { form.reset(); form.descricao.focus(); }, 100);
+});
+
+// Formatar valor como moeda brasileira
+const valorInput = document.getElementById('valor');
+valorInput.addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    value = (value / 100).toFixed(2);
+    value = value.replace('.', ',');
+    value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    e.target.value = 'R$ ' + value;
+});
+
+// Função para deletar entrada
+function deleteEntry(id) {
+    if (confirm('Tem certeza que deseja excluir este lançamento?')) {
+        fetch('/delete_entry/' + id, { method: 'DELETE' })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Erro ao excluir.');
+                }
+            });
+    }
+}
+</script>
+{% endblock %}

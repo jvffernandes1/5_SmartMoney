@@ -1,0 +1,62 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Merriweather+Sans:wght@400;700&display=swap');
+
+:root {
+    --cor-principal: #2C3639;
+    --cor-secundaria: #3F4E4F;
+    --cor-texto: #DCD7C9;
+    --cor-link_hover: #dcc797;
+    --cor-destaque: #A27B5C;
+    --cor-menu: #1b2225;
+}
+
+body {
+    background: var(--cor-principal);
+    color: var(--cor-texto);
+    font-family: 'Merriweather Sans', Arial, Helvetica, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    color: var(--cor-texto);
+    text-decoration: none;
+    padding: 14px 16px;
+}
+a:hover {
+    color: var(--cor-link_hover);
+}
+
+header {
+    background: var(--cor-menu);
+    padding: 14px;
+    border-bottom: 2px solid var(--cor-destaque);
+}
+
+nav {
+    background: var(--cor-menu);
+    padding: 14px;
+}
+
+button, input[type="submit"] {
+    background: var(--cor-destaque);
+    color: var(--cor-texto);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover, input[type="submit"]:hover {
+    background: var(--cor-link_hover);
+    color: var(--cor-principal);
+}
+
+.container {
+    max-width: 800px;
+    margin: 2rem auto;
+    background: var(--cor-secundaria);
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}

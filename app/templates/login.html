@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Entrar</h2>
+<form method="post">
+    <label for="username">Usuário:</label>
+    <input type="text" id="username" name="username" required autofocus>
+    <label for="password">Senha:</label>
+    <input type="password" id="password" name="password" required>
+    <input type="submit" value="Entrar">
+</form>
+<p>Não tem conta? <a href="/register">Cadastre-se</a></p>
+{% endblock %}

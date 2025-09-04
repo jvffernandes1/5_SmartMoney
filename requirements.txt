@@ -1,0 +1,6 @@
+flask
+flask-pymongo
+pymongo
+flask-login
+python-dotenv
+pytest
