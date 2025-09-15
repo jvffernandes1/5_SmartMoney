@@ -1,6 +1,12 @@
 {% extends 'base.html' %}
 {% block content %}
 
+<div style="display:flex; align-items:center; margin-bottom:1rem;">
+    <button id="prev-month" style="background:var(--cor-destaque); color:var(--cor-texto); border:none; padding:0.5rem; border-radius:4px; cursor:pointer; margin-right:0.5rem;">&lt;</button>
+    <span id="current-month" style="font-size:1.2rem; color:var(--cor-texto);">{{ current_month_display }}</span>
+    <button id="next-month" style="background:var(--cor-destaque); color:var(--cor-texto); border:none; padding:0.5rem; border-radius:4px; cursor:pointer; margin-left:0.5rem;">&gt;</button>
+</div>
+
 <h2>Dashboard</h2>
 <p>Bem-vindo, {{ current_user.username }}!</p>
 
@@ -87,7 +93,7 @@
 </script>
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <script>
-// Acessibilidade: abrir/fechar formulário e foco no primeiro campo
+
 const btn = document.getElementById('abrir-form');
 const form = document.getElementById('form-lancamento');
 btn.addEventListener('click', () => {
@@ -97,13 +103,11 @@ btn.addEventListener('click', () => {
     }
 });
 form.addEventListener('submit', (e) => {
-    // Limpar valor para enviar como número
     let valor = valorInput.value.replace('R$ ', '').replace('.', '').replace(',', '.');
     valorInput.value = valor;
     setTimeout(() => { form.reset(); form.descricao.focus(); }, 100);
 });
 
-// Formatar valor como moeda brasileira
 const valorInput = document.getElementById('valor');
 valorInput.addEventListener('input', function(e) {
     let value = e.target.value.replace(/\D/g, '');
@@ -113,7 +117,6 @@ valorInput.addEventListener('input', function(e) {
     e.target.value = 'R$ ' + value;
 });
 
-// Função para deletar entrada
 function deleteEntry(id) {
     if (confirm('Tem certeza que deseja excluir este lançamento?')) {
         fetch('/delete_entry/' + id, { method: 'DELETE' })
@@ -125,6 +128,36 @@ function deleteEntry(id) {
                 }
             });
     }
+}
+
+// Navegação de mês
+const prevBtn = document.getElementById('prev-month');
+const nextBtn = document.getElementById('next-month');
+
+function getCurrentMonth() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('month') || '{{ current_month }}';
+}
+
+function navigateMonth(direction) {
+    const current = getCurrentMonth();
+    const [year, month] = current.split('-').map(Number);
+    let newMonth = month + direction;
+    let newYear = year;
+    if (newMonth > 12) {
+        newMonth = 1;
+        newYear++;
+    } else if (newMonth < 1) {
+        newMonth = 12;
+        newYear--;
+    }
+    const newMonthStr = `${newYear}-${String(newMonth).padStart(2, '0')}`;
+    window.location.href = `?month=${newMonthStr}`;
+}
+
+if (prevBtn && nextBtn) {
+    prevBtn.addEventListener('click', () => navigateMonth(-1));
+    nextBtn.addEventListener('click', () => navigateMonth(1));
 }
 </script>
 {% endblock %}

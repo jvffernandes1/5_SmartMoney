@@ -1,12 +1,7 @@
-// Dashboard charts and table logic
-// Requires Chart.js
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Dados vindos do template Flask
     const chartData = window.dashboardData;
     if (!chartData) return;
 
-    // Gráfico de barras receitas/despesas por mês
     const ctxBar = document.getElementById('barChart').getContext('2d');
     new Chart(ctxBar, {
         type: 'bar',
@@ -38,7 +33,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Gráfico de pizza por categoria
     const ctxPie = document.getElementById('pieChart').getContext('2d');
     new Chart(ctxPie, {
         type: 'pie',

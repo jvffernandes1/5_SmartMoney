@@ -12,7 +12,9 @@
         <nav>
             <a href="/">Smart Money</a>
             {% if current_user.is_authenticated %}
-                <a href="/dashboard">Dashboard</a>
+                <a href="/dashboard">Gastos Mensais</a>
+                <a href="/tendencias">Tendências</a>
+                <a href="/investimentos">Investimentos</a>
                 <a href="/logout">Sair</a>
             {% else %}
                 <a href="/login">Entrar</a>
@@ -32,5 +34,15 @@
         {% endwith %}
         {% block content %}{% endblock %}
     </main>
+    <footer style="background: var(--cor-menu); color: var(--cor-texto); padding: 1rem; text-align: center; margin-top: 2rem; border-top: 2px solid var(--cor-destaque);">
+        <div style="max-width: 800px; margin: 0 auto;">
+            <p style="margin: 0; font-family: 'Merriweather Sans', sans-serif;">
+                &copy; 2025 Smart Money - Sistema de Gestão Financeira Pessoal
+            </p>
+            <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; opacity: 0.8;">
+                Desenvolvido com Flask e MongoDB
+            </p>
+        </div>
+    </footer>
 </body>
 </html>

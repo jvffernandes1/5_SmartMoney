@@ -71,8 +71,23 @@ from datetime import datetime
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    entries = list(mongo.db.entries.find({'user_id': current_user.id}))
-    # Garantir campos e converter datas
+    from datetime import datetime
+    current_month = request.args.get('month', datetime.now().strftime('%Y-%m'))
+    
+    # Dicionário para traduzir nomes dos meses para português
+    meses_pt = {
+        'January': 'Janeiro', 'February': 'Fevereiro', 'March': 'Março',
+        'April': 'Abril', 'May': 'Maio', 'June': 'Junho',
+        'July': 'Julho', 'August': 'Agosto', 'September': 'Setembro',
+        'October': 'Outubro', 'November': 'Novembro', 'December': 'Dezembro'
+    }
+    
+    month_name_en = datetime.strptime(current_month, '%Y-%m').strftime('%B')
+    month_name_pt = meses_pt.get(month_name_en, month_name_en)
+    year = datetime.strptime(current_month, '%Y-%m').strftime('%Y')
+    current_month_display = f"{month_name_pt}-{year}"
+
+    entries = list(mongo.db.entries.find({'user_id': ObjectId(current_user.id)}))
     for e in entries:
         e['valor'] = float(e.get('valor', 0))
         e['tipo'] = e.get('tipo', 'despesa')
@@ -86,9 +101,11 @@ def dashboard():
             e['data'] = None
         e['descricao'] = e.get('descricao', '')
 
-    # Gráfico de barras: receitas/despesas por mês
+    # Filtrar entries pelo mês selecionado
+    filtered_entries = [e for e in entries if e['data'] and e['data'].strftime('%Y-%m') == current_month]
+
     meses = defaultdict(lambda: {'receita': 0, 'despesa': 0})
-    for e in entries:
+    for e in filtered_entries:
         if e['data']:
             mes = e['data'].strftime('%Y-%m')
         else:
@@ -102,20 +119,19 @@ def dashboard():
     receitas = [meses[m]['receita'] for m in months]
     despesas = [meses[m]['despesa'] for m in months]
 
-    # Gráfico de pizza: percentual por categoria
     categoria_totais = defaultdict(float)
-    for e in entries:
+    for e in filtered_entries:
         if e['tipo'] == 'despesa':
             categoria_totais[e['categoria']] += abs(e['valor'])
     total_despesas = sum(categoria_totais.values())
     categorias = list(categoria_totais.keys())
     percentual_categoria = [round((v/total_despesas)*100, 1) if total_despesas else 0 for v in categoria_totais.values()]
     cores_categoria = [
-        '#A27B5C', '#3F4E4F', '#dcc797', '#2C3639', '#4caf50', '#e53935', '#2196f3', '#ff9800', '#9c27b0', '#607d8b'
+         '#2196f3', '#ff9800', '#9c27b0', '#607d8b', '#4caf50', '#e53935'
     ][:len(categorias)]
 
     # Total
-    total = sum(e['valor'] if e['tipo']=='receita' else -abs(e['valor']) for e in entries)
+    total = sum(e['valor'] if e['tipo']=='receita' else -abs(e['valor']) for e in filtered_entries)
 
     dashboard_data = {
         'months': months,
@@ -127,7 +143,7 @@ def dashboard():
         'total': total
     }
 
-    return render_template('dashboard.html', entries=entries, dashboard_data=dashboard_data)
+    return render_template('dashboard.html', entries=filtered_entries, dashboard_data=dashboard_data, current_month=current_month, current_month_display=current_month_display)
 
 @app.route('/logout')
 @login_required
@@ -135,16 +151,14 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-# API endpoint exemplo
 @app.route('/api/entries', methods=['GET'])
 @login_required
 def api_entries():
-    entries = list(mongo.db.entries.find({'user_id': current_user.id}))
+    entries = list(mongo.db.entries.find({'user_id': ObjectId(current_user.id)}))
     for e in entries:
         e['_id'] = str(e['_id'])
     return {'entries': entries}
 
-# Cadastro de lançamentos
 @app.route('/add_entry', methods=['POST'])
 @login_required
 def add_entry():
@@ -158,7 +172,7 @@ def add_entry():
     except Exception:
         data = None
     mongo.db.entries.insert_one({
-        'user_id': current_user.id,
+        'user_id': ObjectId(current_user.id),
         'descricao': descricao,
         'valor': valor,
         'categoria': categoria,
@@ -168,12 +182,92 @@ def add_entry():
     flash('Lançamento cadastrado com sucesso!')
     return redirect(url_for('dashboard'))
 
-# Exclusão de lançamentos
 @app.route('/delete_entry/<entry_id>', methods=['DELETE'])
 @login_required
 def delete_entry(entry_id):
-    mongo.db.entries.delete_one({'_id': ObjectId(entry_id), 'user_id': current_user.id})
+    mongo.db.entries.delete_one({'_id': ObjectId(entry_id), 'user_id': ObjectId(current_user.id)})
     return '', 204
+
+@app.route('/tendencias')
+@login_required
+def tendencias():
+    entries = list(mongo.db.entries.find({'user_id': ObjectId(current_user.id)}))
+    
+    # Processar datas dos lançamentos
+    for e in entries:
+        e['valor'] = float(e.get('valor', 0))
+        e['tipo'] = e.get('tipo', 'despesa')
+        if 'data' in e and isinstance(e['data'], str):
+            try:
+                e['data'] = datetime.strptime(e['data'], '%Y-%m-%d')
+            except Exception:
+                e['data'] = None
+        elif 'data' not in e:
+            e['data'] = None
+
+    # Verificar se há pelo menos 3 meses de dados
+    months_with_data = set()
+    for e in entries:
+        if e['data']:
+            months_with_data.add(e['data'].strftime('%Y-%m'))
+    
+    if len(months_with_data) < 3:
+        return render_template('tendencias.html', 
+                             has_enough_data=False, 
+                             months_needed=3 - len(months_with_data))
+
+    # Calcular tendências mensais
+    monthly_data = defaultdict(lambda: {'receita': 0, 'despesa': 0, 'total': 0})
+    for e in entries:
+        if e['data']:
+            mes = e['data'].strftime('%Y-%m')
+            if e['tipo'] == 'receita':
+                monthly_data[mes]['receita'] += e['valor']
+            else:
+                monthly_data[mes]['despesa'] += abs(e['valor'])
+            monthly_data[mes]['total'] = monthly_data[mes]['receita'] - monthly_data[mes]['despesa']
+
+    # Ordenar por mês
+    sorted_months = sorted(monthly_data.keys())
+    
+    # Preparar dados para o gráfico
+    labels = []
+    receitas = []
+    despesas = []
+    saldos = []
+    
+    # Dicionário para traduzir nomes dos meses
+    meses_pt = {
+        'January': 'Jan', 'February': 'Fev', 'March': 'Mar',
+        'April': 'Abr', 'May': 'Mai', 'June': 'Jun',
+        'July': 'Jul', 'August': 'Ago', 'September': 'Set',
+        'October': 'Out', 'November': 'Nov', 'December': 'Dez'
+    }
+    
+    for mes in sorted_months:
+        year, month = mes.split('-')
+        month_name_en = datetime.strptime(mes, '%Y-%m').strftime('%B')
+        month_name_pt = meses_pt.get(month_name_en, month_name_en)
+        labels.append(f"{month_name_pt}/{year[-2:]}")
+        receitas.append(monthly_data[mes]['receita'])
+        despesas.append(monthly_data[mes]['despesa'])
+        saldos.append(monthly_data[mes]['total'])
+
+    tendencias_data = {
+        'labels': labels,
+        'receitas': receitas,
+        'despesas': despesas,
+        'saldos': saldos
+    }
+
+    return render_template('tendencias.html', 
+                         has_enough_data=True, 
+                         tendencias_data=tendencias_data)
+
+@app.route('/investimentos')
+@login_required
+def investimentos():
+    return render_template('investimentos.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

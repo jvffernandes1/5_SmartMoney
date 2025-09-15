@@ -1,0 +1,400 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>Investimentos</h2>
+
+<!-- Seção de Cotações em Tempo Real -->
+<div style="background: var(--cor-secundaria); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+    <h3 style="margin-bottom: 1rem; color: var(--cor-texto);">Cotações em Tempo Real</h3>
+    <div id="cotacoes" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div class="cotacao-card" style="background: var(--cor-principal); padding: 1rem; border-radius: 6px; border: 1px solid var(--cor-destaque);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-weight: bold; color: var(--cor-texto);">USD/BRL</span>
+                <span id="usd-status" style="font-size: 0.8rem; color: #666;">Carregando...</span>
+            </div>
+            <div style="font-size: 1.5rem; font-weight: bold; color: var(--cor-destaque);" id="usd-valor">--</div>
+            <div style="font-size: 0.8rem; color: #666; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.25rem;" id="usd-variacao">
+                <span id="usd-pct">--</span>
+                <span style="font-size: 0.7rem; color: #999;" title="Variação percentual do dia">(% variação diária)</span>
+            </div>
+        </div>
+
+        <div class="cotacao-card" style="background: var(--cor-principal); padding: 1rem; border-radius: 6px; border: 1px solid var(--cor-destaque);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-weight: bold; color: var(--cor-texto);">EUR/BRL</span>
+                <span id="eur-status" style="font-size: 0.8rem; color: #666;">Carregando...</span>
+            </div>
+            <div style="font-size: 1.5rem; font-weight: bold; color: var(--cor-destaque);" id="eur-valor">--</div>
+            <div style="font-size: 0.8rem; color: #666; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.25rem;" id="eur-variacao">
+                <span id="eur-pct">--</span>
+                <span style="font-size: 0.7rem; color: #999;" title="Variação percentual do dia">(% variação diária)</span>
+            </div>
+        </div>
+
+        <div class="cotacao-card" style="background: var(--cor-principal); padding: 1rem; border-radius: 6px; border: 1px solid var(--cor-destaque);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-weight: bold; color: var(--cor-texto);">BTC/BRL</span>
+                <span id="btc-status" style="font-size: 0.8rem; color: #666;">Carregando...</span>
+            </div>
+            <div style="font-size: 1.5rem; font-weight: bold; color: var(--cor-destaque);" id="btc-valor">--</div>
+            <div style="font-size: 0.8rem; color: #666; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.25rem;" id="btc-variacao">
+                <span id="btc-pct">--</span>
+                <span style="font-size: 0.7rem; color: #999;" title="Variação percentual do dia">(% variação diária)</span>
+            </div>
+        </div>
+    </div>
+    <button id="atualizar-cotacoes" style="margin-top: 1rem; background: var(--cor-destaque); color: var(--cor-texto); border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+        Atualizar Cotações
+    </button>
+</div>
+
+<!-- Botão para abrir modal de adicionar ativo -->
+<div style="background: var(--cor-secundaria); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; text-align: center;">
+    <button id="abrir-modal-ativo" style="background: var(--cor-destaque); color: var(--cor-texto); border: none; padding: 1rem 2rem; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: bold;">
+        ➕ Adicionar Ativo à Carteira
+    </button>
+</div>
+
+<!-- Lista de Ativos da Carteira -->
+<div style="background: var(--cor-secundaria); padding: 1.5rem; border-radius: 8px;">
+    <h3 style="margin-bottom: 1rem; color: var(--cor-texto);">Sua Carteira de Ativos</h3>
+    <div id="lista-ativos">
+        <p style="color: #666; text-align: center; padding: 2rem;">Nenhum ativo adicionado ainda. Adicione seu primeiro ativo acima!</p>
+    </div>
+</div>
+
+<!-- Modal para Adicionar Ativo -->
+<div id="modal-ativo" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: var(--cor-principal); padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="margin: 0; color: var(--cor-texto);">Adicionar Ativo à Carteira</h3>
+            <button id="fechar-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--cor-texto); padding: 0.25rem;">×</button>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <label for="tipo-ativo" style="display: block; margin-bottom: 0.5rem; color: var(--cor-texto);">Tipo de Ativo:</label>
+            <select id="tipo-ativo" style="width: 100%; padding: 0.5rem; border: 1px solid var(--cor-destaque); border-radius: 4px; background: var(--cor-principal); color: var(--cor-texto);">
+                <option value="">Selecione o tipo...</option>
+                <option value="acao">Ações Nacionais</option>
+                <option value="renda-fixa">Renda Fixa Nacional</option>
+                <option value="cripto">Criptomoedas</option>
+            </select>
+        </div>
+
+        <!-- Campos específicos para Ações -->
+        <div id="campos-acao" style="display: none;">
+            <div style="margin-bottom: 1rem;">
+                <label for="ticker-acao" style="display: block; margin-bottom: 0.5rem; color: var(--cor-texto);">Ticker da Ação:</label>
+                <input type="text" id="ticker-acao" list="tickers-list" placeholder="Ex: PETR4, VALE3, ITUB4..." style="width: 100%; padding: 0.5rem; border: 1px solid var(--cor-destaque); border-radius: 4px; background: var(--cor-principal); color: var(--cor-texto);">
+                <datalist id="tickers-list">
+                    <option value="PETR4">PETR4 - Petrobras</option>
+                    <option value="VALE3">VALE3 - Vale</option>
+                    <option value="ITUB4">ITUB4 - Itaú Unibanco</option>
+                    <option value="BBDC4">BBDC4 - Bradesco</option>
+                    <option value="WEGE3">WEGE3 - WEG</option>
+                    <option value="MGLU3">MGLU3 - Magazine Luiza</option>
+                    <option value="ABEV3">ABEV3 - Ambev</option>
+                    <option value="PETR3">PETR3 - Petrobras ON</option>
+                    <option value="ITSA4">ITSA4 - Itaúsa</option>
+                    <option value="B3SA3">B3SA3 - B3</option>
+                </datalist>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label for="quantidade-acao" style="display: block; margin-bottom: 0.5rem; color: var(--cor-texto);">Quantidade:</label>
+                <input type="number" id="quantidade-acao" placeholder="Ex: 100" min="1" style="width: 100%; padding: 0.5rem; border: 1px solid var(--cor-destaque); border-radius: 4px; background: var(--cor-principal); color: var(--cor-texto);">
+            </div>
+        </div>
+
+        <!-- Campos específicos para Renda Fixa -->
+        <div id="campos-renda-fixa" style="display: none;">
+            <div style="margin-bottom: 1rem;">
+                <label for="nome-renda-fixa" style="display: block; margin-bottom: 0.5rem; color: var(--cor-texto);">Nome do Investimento:</label>
+                <input type="text" id="nome-renda-fixa" placeholder="Ex: CDB Banco X, LCI, LCA..." style="width: 100%; padding: 0.5rem; border: 1px solid var(--cor-destaque); border-radius: 4px; background: var(--cor-principal); color: var(--cor-texto);">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label for="valor-renda-fixa" style="display: block; margin-bottom: 0.5rem; color: var(--cor-texto);">Valor Investido (R$):</label>
+                <input type="text" id="valor-renda-fixa" placeholder="Ex: 5000,00" style="width: 100%; padding: 0.5rem; border: 1px solid var(--cor-destaque); border-radius: 4px; background: var(--cor-principal); color: var(--cor-texto);">
+            </div>
+        </div>
+
+        <!-- Campos específicos para Cripto -->
+        <div id="campos-cripto" style="display: none;">
+            <div style="margin-bottom: 1rem;">
+                <label for="tipo-cripto" style="display: block; margin-bottom: 0.5rem; color: var(--cor-texto);">Criptomoeda:</label>
+                <select id="tipo-cripto" style="width: 100%; padding: 0.5rem; border: 1px solid var(--cor-destaque); border-radius: 4px; background: var(--cor-principal); color: var(--cor-texto);">
+                    <option value="">Selecione...</option>
+                    <option value="BTC">Bitcoin (BTC)</option>
+                    <option value="ETH">Ethereum (ETH)</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label for="quantidade-cripto" style="display: block; margin-bottom: 0.5rem; color: var(--cor-texto);">Quantidade:</label>
+                <input type="text" id="quantidade-cripto" placeholder="Ex: 0.00012345" step="0.00000001" style="width: 100%; padding: 0.5rem; border: 1px solid var(--cor-destaque); border-radius: 4px; background: var(--cor-principal); color: var(--cor-texto);">
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+            <button id="cancelar-ativo" style="background: #666; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer;">
+                Cancelar
+            </button>
+            <button id="adicionar-ativo" style="background: var(--cor-destaque); color: var(--cor-texto); border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                Adicionar Ativo
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Função para buscar cotações da API
+async function buscarCotacoes() {
+    try {
+        const response = await fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL');
+        const data = await response.json();
+
+        // USD
+        if (data.USDBRL) {
+            document.getElementById('usd-valor').textContent = `R$ ${parseFloat(data.USDBRL.bid).toFixed(2)}`;
+            document.getElementById('usd-pct').textContent = `${data.USDBRL.pctChange}%`;
+            document.getElementById('usd-status').textContent = 'Atualizado';
+            document.getElementById('usd-status').style.color = '#4CAF50';
+        }
+
+        // EUR
+        if (data.EURBRL) {
+            document.getElementById('eur-valor').textContent = `R$ ${parseFloat(data.EURBRL.bid).toFixed(2)}`;
+            document.getElementById('eur-pct').textContent = `${data.EURBRL.pctChange}%`;
+            document.getElementById('eur-status').textContent = 'Atualizado';
+            document.getElementById('eur-status').style.color = '#4CAF50';
+        }
+
+        // BTC
+        if (data.BTCBRL) {
+            document.getElementById('btc-valor').textContent = `R$ ${parseFloat(data.BTCBRL.bid).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('btc-pct').textContent = `${data.BTCBRL.pctChange}%`;
+            document.getElementById('btc-status').textContent = 'Atualizado';
+            document.getElementById('btc-status').style.color = '#4CAF50';
+        }
+    } catch (error) {
+        console.error('Erro ao buscar cotações:', error);
+        document.getElementById('usd-status').textContent = 'Erro';
+        document.getElementById('eur-status').textContent = 'Erro';
+        document.getElementById('btc-status').textContent = 'Erro';
+        document.getElementById('usd-status').style.color = '#f44336';
+        document.getElementById('eur-status').style.color = '#f44336';
+        document.getElementById('btc-status').style.color = '#f44336';
+    }
+}
+
+// Controle do Modal
+const modal = document.getElementById('modal-ativo');
+const abrirModalBtn = document.getElementById('abrir-modal-ativo');
+const fecharModalBtn = document.getElementById('fechar-modal');
+const cancelarBtn = document.getElementById('cancelar-ativo');
+
+function abrirModal() {
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // Impede scroll da página
+}
+
+function fecharModal() {
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto'; // Restaura scroll da página
+    // Limpar formulário
+    document.getElementById('tipo-ativo').value = '';
+    document.getElementById('campos-acao').style.display = 'none';
+    document.getElementById('campos-renda-fixa').style.display = 'none';
+    document.getElementById('campos-cripto').style.display = 'none';
+    document.getElementById('ticker-acao').value = '';
+    document.getElementById('quantidade-acao').value = '';
+    document.getElementById('nome-renda-fixa').value = '';
+    document.getElementById('valor-renda-fixa').value = '';
+    document.getElementById('tipo-cripto').value = '';
+    document.getElementById('quantidade-cripto').value = '';
+}
+
+abrirModalBtn.addEventListener('click', abrirModal);
+fecharModalBtn.addEventListener('click', fecharModal);
+cancelarBtn.addEventListener('click', fecharModal);
+
+// Fechar modal ao clicar fora dele
+modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+        fecharModal();
+    }
+});
+
+// Botão para atualizar cotações
+document.getElementById('atualizar-cotacoes').addEventListener('click', () => {
+    buscarCotacoes();
+    // Feedback visual
+    const btn = document.getElementById('atualizar-cotacoes');
+    const originalText = btn.textContent;
+    btn.textContent = 'Atualizando...';
+    btn.disabled = true;
+    setTimeout(() => {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }, 2000);
+});
+
+// Controle dos campos dinâmicos
+document.getElementById('tipo-ativo').addEventListener('change', function() {
+    const tipo = this.value;
+
+    // Esconder todos os campos específicos
+    document.getElementById('campos-acao').style.display = 'none';
+    document.getElementById('campos-renda-fixa').style.display = 'none';
+    document.getElementById('campos-cripto').style.display = 'none';
+
+    // Mostrar campos específicos do tipo selecionado
+    if (tipo === 'acao') {
+        document.getElementById('campos-acao').style.display = 'block';
+    } else if (tipo === 'renda-fixa') {
+        document.getElementById('campos-renda-fixa').style.display = 'block';
+    } else if (tipo === 'cripto') {
+        document.getElementById('campos-cripto').style.display = 'block';
+    }
+});
+
+// Função para formatar valores monetários
+function formatarMoeda(valor) {
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    }).format(valor);
+}
+
+// Função para formatar números cripto
+function formatarCripto(valor) {
+    return parseFloat(valor).toFixed(8);
+}
+
+// Função para carregar ativos do localStorage
+function carregarAtivos() {
+    const ativos = JSON.parse(localStorage.getItem('carteira_ativos') || '[]');
+    const listaAtivos = document.getElementById('lista-ativos');
+
+    if (ativos.length === 0) {
+        listaAtivos.innerHTML = '<p style="color: #666; text-align: center; padding: 2rem;">Nenhum ativo adicionado ainda. Adicione seu primeiro ativo acima!</p>';
+        return;
+    }
+
+    listaAtivos.innerHTML = ativos.map((ativo, index) => {
+        let detalhes = '';
+        let tipoLabel = '';
+
+        if (ativo.tipo === 'acao') {
+            tipoLabel = 'Ação Nacional';
+            detalhes = `${ativo.ticker} - ${ativo.quantidade} ações`;
+        } else if (ativo.tipo === 'renda-fixa') {
+            tipoLabel = 'Renda Fixa';
+            detalhes = `${ativo.nome} - ${formatarMoeda(ativo.valor)}`;
+        } else if (ativo.tipo === 'cripto') {
+            tipoLabel = 'Criptomoeda';
+            detalhes = `${ativo.moeda} - ${formatarCripto(ativo.quantidade)} ${ativo.moeda}`;
+        }
+
+        return `
+            <div style="background: var(--cor-principal); padding: 1rem; border-radius: 6px; margin-bottom: 0.5rem; border: 1px solid var(--cor-destaque); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: bold; color: var(--cor-texto); margin-bottom: 0.25rem;">${tipoLabel}</div>
+                    <div style="color: #666;">${detalhes}</div>
+                </div>
+                <button onclick="removerAtivo(${index})" style="background: #f44336; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Remover</button>
+            </div>
+        `;
+    }).join('');
+}
+
+// Função para remover ativo
+function removerAtivo(index) {
+    if (confirm('Tem certeza que deseja remover este ativo?')) {
+        const ativos = JSON.parse(localStorage.getItem('carteira_ativos') || '[]');
+        ativos.splice(index, 1);
+        localStorage.setItem('carteira_ativos', JSON.stringify(ativos));
+        carregarAtivos();
+    }
+}
+
+// Adicionar ativo
+document.getElementById('adicionar-ativo').addEventListener('click', function() {
+    const tipo = document.getElementById('tipo-ativo').value;
+
+    if (!tipo) {
+        alert('Por favor, selecione o tipo de ativo.');
+        return;
+    }
+
+    let novoAtivo = { tipo };
+
+    if (tipo === 'acao') {
+        const ticker = document.getElementById('ticker-acao').value.toUpperCase();
+        const quantidade = parseInt(document.getElementById('quantidade-acao').value);
+
+        if (!ticker || !quantidade) {
+            alert('Por favor, preencha o ticker e a quantidade.');
+            return;
+        }
+
+        novoAtivo.ticker = ticker;
+        novoAtivo.quantidade = quantidade;
+
+    } else if (tipo === 'renda-fixa') {
+        const nome = document.getElementById('nome-renda-fixa').value;
+        const valor = parseFloat(document.getElementById('valor-renda-fixa').value.replace(',', '.'));
+
+        if (!nome || !valor) {
+            alert('Por favor, preencha o nome e o valor.');
+            return;
+        }
+
+        novoAtivo.nome = nome;
+        novoAtivo.valor = valor;
+
+    } else if (tipo === 'cripto') {
+        const moeda = document.getElementById('tipo-cripto').value;
+        const quantidade = parseFloat(document.getElementById('quantidade-cripto').value);
+
+        if (!moeda || !quantidade) {
+            alert('Por favor, selecione a criptomoeda e a quantidade.');
+            return;
+        }
+
+        novoAtivo.moeda = moeda;
+        novoAtivo.quantidade = quantidade;
+    }
+
+    // Salvar no localStorage
+    const ativos = JSON.parse(localStorage.getItem('carteira_ativos') || '[]');
+    ativos.push(novoAtivo);
+    localStorage.setItem('carteira_ativos', JSON.stringify(ativos));
+
+    // Fechar modal
+    fecharModal();
+
+    // Recarregar lista
+    carregarAtivos();
+
+    alert('Ativo adicionado com sucesso!');
+});
+
+// Carregar ativos ao carregar a página
+document.addEventListener('DOMContentLoaded', carregarAtivos);
+
+// Formatação automática do campo valor renda fixa
+document.getElementById('valor-renda-fixa').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    value = (value / 100).toFixed(2);
+    value = value.replace('.', ',');
+    value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    e.target.value = 'R$ ' + value;
+});
+
+// Carregar cotações ao carregar a página
+document.addEventListener('DOMContentLoaded', buscarCotacoes);
+
+// Carregar ativos ao carregar a página
+document.addEventListener('DOMContentLoaded', carregarAtivos);
+</script>
+
+{% endblock %}

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Modal Investimentos</title>
+    <style>
+        :root {
+            --cor-principal: #1a1a1a;
+            --cor-secundaria: #2a2a2a;
+            --cor-destaque: #4CAF50;
+            --cor-texto: #ffffff;
+        }
+
+        body {
+            font-family: 'Merriweather Sans', sans-serif;
+            background: var(--cor-principal);
+            color: var(--cor-texto);
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Modal Styles */
+        #modal-ativo {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #modal-ativo > div {
+            background: var(--cor-principal);
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--cor-texto);
+            padding: 0.25rem;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--cor-destaque);
+            color: var(--cor-texto);
+        }
+
+        .btn-secondary {
+            background: #666;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--cor-destaque);
+            border-radius: 4px;
+            background: var(--cor-principal);
+            color: var(--cor-texto);
+        }
+
+        .dynamic-fields {
+            display: none;
+        }
+
+        .test-btn {
+            background: var(--cor-destaque);
+            color: var(--cor-texto);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Teste do Modal de Investimentos</h1>
+    <button class="test-btn" onclick="abrirModal()">Abrir Modal de Adicionar Ativo</button>
+
+    <!-- Modal para Adicionar Ativo -->
+    <div id="modal-ativo">
+        <div>
+            <div class="modal-header">
+                <h3>Adicionar Ativo à Carteira</h3>
+                <button class="close-btn" onclick="fecharModal()">×</button>
+            </div>
+
+            <div class="form-group">
+                <label for="tipo-ativo">Tipo de Ativo:</label>
+                <select id="tipo-ativo" onchange="mostrarCampos()">
+                    <option value="">Selecione o tipo...</option>
+                    <option value="acao">Ações Nacionais</option>
+                    <option value="renda-fixa">Renda Fixa Nacional</option>
+                    <option value="cripto">Criptomoedas</option>
+                </select>
+            </div>
+
+            <!-- Campos específicos para Ações -->
+            <div id="campos-acao" class="dynamic-fields">
+                <div class="form-group">
+                    <label for="ticker-acao">Ticker da Ação:</label>
+                    <input type="text" id="ticker-acao" placeholder="Ex: PETR4, VALE3, ITUB4...">
+                </div>
+                <div class="form-group">
+                    <label for="quantidade-acao">Quantidade:</label>
+                    <input type="number" id="quantidade-acao" placeholder="Ex: 100" min="1">
+                </div>
+            </div>
+
+            <!-- Campos específicos para Renda Fixa -->
+            <div id="campos-renda-fixa" class="dynamic-fields">
+                <div class="form-group">
+                    <label for="nome-renda-fixa">Nome do Investimento:</label>
+                    <input type="text" id="nome-renda-fixa" placeholder="Ex: CDB Banco X, LCI, LCA...">
+                </div>
+                <div class="form-group">
+                    <label for="valor-renda-fixa">Valor Investido (R$):</label>
+                    <input type="text" id="valor-renda-fixa" placeholder="Ex: 5000,00">
+                </div>
+            </div>
+
+            <!-- Campos específicos para Cripto -->
+            <div id="campos-cripto" class="dynamic-fields">
+                <div class="form-group">
+                    <label for="tipo-cripto">Criptomoeda:</label>
+                    <select id="tipo-cripto">
+                        <option value="">Selecione...</option>
+                        <option value="BTC">Bitcoin (BTC)</option>
+                        <option value="ETH">Ethereum (ETH)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="quantidade-cripto">Quantidade:</label>
+                    <input type="text" id="quantidade-cripto" placeholder="Ex: 0.00012345">
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="adicionarAtivo()">Adicionar Ativo</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('modal-ativo');
+
+        function abrirModal() {
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function fecharModal() {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            // Limpar formulário
+            document.getElementById('tipo-ativo').value = '';
+            document.getElementById('campos-acao').style.display = 'none';
+            document.getElementById('campos-renda-fixa').style.display = 'none';
+            document.getElementById('campos-cripto').style.display = 'none';
+        }
+
+        function mostrarCampos() {
+            const tipo = document.getElementById('tipo-ativo').value;
+
+            // Esconder todos os campos específicos
+            document.getElementById('campos-acao').style.display = 'none';
+            document.getElementById('campos-renda-fixa').style.display = 'none';
+            document.getElementById('campos-cripto').style.display = 'none';
+
+            // Mostrar campos específicos do tipo selecionado
+            if (tipo === 'acao') {
+                document.getElementById('campos-acao').style.display = 'block';
+            } else if (tipo === 'renda-fixa') {
+                document.getElementById('campos-renda-fixa').style.display = 'block';
+            } else if (tipo === 'cripto') {
+                document.getElementById('campos-cripto').style.display = 'block';
+            }
+        }
+
+        function adicionarAtivo() {
+            const tipo = document.getElementById('tipo-ativo').value;
+
+            if (!tipo) {
+                alert('Por favor, selecione o tipo de ativo.');
+                return;
+            }
+
+            alert('Ativo adicionado com sucesso! (simulação)');
+            fecharModal();
+        }
+
+        // Fechar modal ao clicar fora dele
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                fecharModal();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Análise de Tendências</h2>
+
+{% if not has_enough_data %}
+<div style="text-align: center; padding: 3rem; background: var(--cor-secundaria); border-radius: 8px; margin: 2rem 0;">
+    <h3 style="color: var(--cor-texto); margin-bottom: 1rem;">🚫 Acesso Restrito</h3>
+    <p style="color: var(--cor-texto); font-size: 1.1rem; margin-bottom: 1rem;">
+        Para acessar a análise de tendências, você precisa ter pelo menos 3 meses de dados cadastrados.
+    </p>
+    <p style="color: var(--cor-texto); opacity: 0.8;">
+        Você tem dados de <strong>{{ 3 - months_needed }}</strong> mês(es). Faltam <strong>{{ months_needed }}</strong> mês(es).
+    </p>
+    <div style="margin-top: 2rem;">
+        <a href="/dashboard" style="background: var(--cor-destaque); color: var(--cor-texto); padding: 0.75rem 1.5rem; border-radius: 4px; text-decoration: none; display: inline-block;">
+            Voltar ao Dashboard
+        </a>
+    </div>
+</div>
+{% else %}
+<p style="color: var(--cor-texto); margin-bottom: 2rem;">
+    Acompanhe a evolução das suas receitas e despesas ao longo do tempo para identificar padrões e tendências.
+</p>
+
+<div style="background: var(--cor-secundaria); padding: 2rem; border-radius: 8px; margin-bottom: 2rem;">
+    <h3 style="color: var(--cor-texto); margin-bottom: 1rem;">Tendências Mensais</h3>
+    <canvas id="tendenciasChart" height="300"></canvas>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+    <div style="background: var(--cor-secundaria); padding: 1.5rem; border-radius: 8px; text-align: center;">
+        <h4 style="color: var(--cor-texto); margin-bottom: 0.5rem;">📈 Receitas</h4>
+        <p style="color: #4caf50; font-size: 1.2rem; font-weight: bold; margin: 0;">
+            R$ {{ "%.2f"|format(tendencias_data.receitas[-1] if tendencias_data.receitas else 0) }}
+        </p>
+        <p style="color: var(--cor-texto); font-size: 0.9rem; opacity: 0.8; margin: 0.5rem 0 0 0;">
+            Último mês
+        </p>
+    </div>
+    <div style="background: var(--cor-secundaria); padding: 1.5rem; border-radius: 8px; text-align: center;">
+        <h4 style="color: var(--cor-texto); margin-bottom: 0.5rem;">📉 Despesas</h4>
+        <p style="color: #e53935; font-size: 1.2rem; font-weight: bold; margin: 0;">
+            R$ {{ "%.2f"|format(tendencias_data.despesas[-1] if tendencias_data.despesas else 0) }}
+        </p>
+        <p style="color: var(--cor-texto); font-size: 0.9rem; opacity: 0.8; margin: 0.5rem 0 0 0;">
+            Último mês
+        </p>
+    </div>
+    <div style="background: var(--cor-secundaria); padding: 1.5rem; border-radius: 8px; text-align: center;">
+        <h4 style="color: var(--cor-texto); margin-bottom: 0.5rem;">⚖️ Saldo</h4>
+        <p style="color: {{ '#4caf50' if tendencias_data.saldos[-1] >= 0 else '#e53935' }}; font-size: 1.2rem; font-weight: bold; margin: 0;">
+            R$ {{ "%.2f"|format(tendencias_data.saldos[-1] if tendencias_data.saldos else 0) }}
+        </p>
+        <p style="color: var(--cor-texto); font-size: 0.9rem; opacity: 0.8; margin: 0.5rem 0 0 0;">
+            Último mês
+        </p>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tendenciasData = {{ tendencias_data|tojson }};
+    
+    const ctx = document.getElementById('tendenciasChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: tendenciasData.labels,
+            datasets: [
+                {
+                    label: 'Receitas',
+                    data: tendenciasData.receitas,
+                    borderColor: '#4caf50',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Despesas',
+                    data: tendenciasData.despesas,
+                    borderColor: '#e53935',
+                    backgroundColor: 'rgba(229, 57, 53, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Saldo',
+                    data: tendenciasData.saldos,
+                    borderColor: '#2196f3',
+                    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 3,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { 
+                    position: 'top',
+                    labels: { color: getComputedStyle(document.body).getPropertyValue('--cor-texto') }
+                },
+                title: { 
+                    display: true, 
+                    text: 'Evolução Financeira Mensal',
+                    color: getComputedStyle(document.body).getPropertyValue('--cor-texto')
+                }
+            },
+            scales: {
+                x: { 
+                    ticks: { color: getComputedStyle(document.body).getPropertyValue('--cor-texto') },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                y: { 
+                    ticks: { 
+                        color: getComputedStyle(document.body).getPropertyValue('--cor-texto'),
+                        callback: function(value) {
+                            return 'R$ ' + value.toFixed(0);
+                        }
+                    },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endif %}
+{% endblock %}
