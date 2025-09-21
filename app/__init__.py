@@ -214,7 +214,8 @@ def tendencias():
     if len(months_with_data) < 3:
         return render_template('tendencias.html', 
                              has_enough_data=False, 
-                             months_needed=3 - len(months_with_data))
+                             months_needed=3 - len(months_with_data),
+                             tendencias_data={'labels': [], 'receitas': [], 'despesas': [], 'saldos': []})
 
     # Calcular tendências mensais
     monthly_data = defaultdict(lambda: {'receita': 0, 'despesa': 0, 'total': 0})
@@ -268,6 +269,18 @@ def tendencias():
 @login_required
 def investimentos():
     return render_template('investimentos.html')
+
+@app.route('/api/cotacoes')
+@login_required
+def api_cotacoes():
+    import requests
+    url = 'https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL,BTC-BRL?token=fa63ba9b800614afd38479ef0a06210a199d86bfea5fa979a407b725cf357ba3'
+    try:
+        response = requests.get(url)
+        data = response.json()
+        return data
+    except Exception as e:
+        return {'error': str(e)}, 500
 
 if __name__ == '__main__':
     app.run(debug=True)

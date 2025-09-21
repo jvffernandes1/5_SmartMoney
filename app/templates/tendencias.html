@@ -48,7 +48,7 @@
     </div>
     <div style="background: var(--cor-secundaria); padding: 1.5rem; border-radius: 8px; text-align: center;">
         <h4 style="color: var(--cor-texto); margin-bottom: 0.5rem;">⚖️ Saldo</h4>
-        <p style="color: {{ '#4caf50' if tendencias_data.saldos[-1] >= 0 else '#e53935' }}; font-size: 1.2rem; font-weight: bold; margin: 0;">
+        <p style="color: '{{ '#4caf50' if tendencias_data.saldos[-1] >= 0 else '#e53935' }}'; font-size: 1.2rem; font-weight: bold; margin: 0;">
             R$ {{ "%.2f"|format(tendencias_data.saldos[-1] if tendencias_data.saldos else 0) }}
         </p>
         <p style="color: var(--cor-texto); font-size: 0.9rem; opacity: 0.8; margin: 0.5rem 0 0 0;">
@@ -60,9 +60,68 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const tendenciasData = {{ tendencias_data|tojson }};
-    
-    const ctx = document.getElementById('tendenciasChart').getContext('2d');
+    console.log('JavaScript de tendências carregado');
+
+    // Verificar se o elemento do gráfico existe
+    const chartElement = document.getElementById('tendenciasChart');
+    if (!chartElement) {
+        console.log('Elemento tendenciasChart não encontrado - pode não haver dados suficientes');
+        return;
+    }
+
+    console.log('Elemento do gráfico encontrado, tentando carregar dados...');
+
+    // Tentar obter os dados de forma segura
+    let tendenciasData;
+    try {
+        const dataString = '{{ tendencias_data|tojson|safe }}';
+        console.log('String de dados recebida:', dataString);
+
+        // Verificar se a string não está vazia ou None
+        if (!dataString || dataString.trim() === '' || dataString === 'None' || dataString === '{}' || dataString === 'null') {
+            console.log('Dados de tendências não disponíveis ou vazios');
+            return;
+        }
+
+        tendenciasData = JSON.parse(dataString);
+        console.log('Dados parseados com sucesso:', tendenciasData);
+    } catch (error) {
+        console.error('Erro ao parsear dados de tendências:', error);
+        console.error('String que causou erro:', '{{ tendencias_data|tojson|safe }}');
+        return;
+    }
+
+    // Verificar se os dados necessários existem
+    if (!tendenciasData || typeof tendenciasData !== 'object') {
+        console.log('Dados de tendências não são um objeto válido');
+        return;
+    }
+
+    if (!tendenciasData.labels || !Array.isArray(tendenciasData.labels) ||
+        !tendenciasData.receitas || !Array.isArray(tendenciasData.receitas) ||
+        !tendenciasData.despesas || !Array.isArray(tendenciasData.despesas) ||
+        !tendenciasData.saldos || !Array.isArray(tendenciasData.saldos)) {
+        console.log('Estrutura de dados de tendências inválida');
+        return;
+    }
+
+    // Verificar se há dados para plotar
+    if (tendenciasData.labels.length === 0) {
+        console.log('Não há dados suficientes para gerar o gráfico');
+        chartElement.style.display = 'none';
+        const noDataMessage = document.createElement('p');
+        noDataMessage.textContent = 'Não há dados suficientes para gerar o gráfico de tendências.';
+        noDataMessage.style.textAlign = 'center';
+        noDataMessage.style.color = 'var(--cor-texto)';
+        noDataMessage.style.fontSize = '1.1rem';
+        noDataMessage.style.padding = '2rem';
+        chartElement.parentNode.appendChild(noDataMessage);
+        return;
+    }
+
+    console.log('Criando gráfico com dados:', tendenciasData);
+
+    const ctx = chartElement.getContext('2d');
     new Chart(ctx, {
         type: 'line',
         data: {
@@ -98,23 +157,23 @@ document.addEventListener('DOMContentLoaded', function() {
         options: {
             responsive: true,
             plugins: {
-                legend: { 
+                legend: {
                     position: 'top',
                     labels: { color: getComputedStyle(document.body).getPropertyValue('--cor-texto') }
                 },
-                title: { 
-                    display: true, 
+                title: {
+                    display: true,
                     text: 'Evolução Financeira Mensal',
                     color: getComputedStyle(document.body).getPropertyValue('--cor-texto')
                 }
             },
             scales: {
-                x: { 
+                x: {
                     ticks: { color: getComputedStyle(document.body).getPropertyValue('--cor-texto') },
                     grid: { color: 'rgba(255, 255, 255, 0.1)' }
                 },
-                y: { 
-                    ticks: { 
+                y: {
+                    ticks: {
                         color: getComputedStyle(document.body).getPropertyValue('--cor-texto'),
                         callback: function(value) {
                             return 'R$ ' + value.toFixed(0);
@@ -127,5 +186,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
 {% endif %}
 {% endblock %}
