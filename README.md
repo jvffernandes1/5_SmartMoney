@@ -35,8 +35,18 @@ Smart Money é uma aplicação web para gestão de finanças pessoais, desenvolv
 ## Testes
 - Execute `pytest` para rodar os testes automatizados.
 
-## Deploy
-- Estrutura pronta para deploy em serviços como Render, Heroku ou similares.
+## Deploy no Render.com
+
+1. **Configure as variáveis de ambiente no Render:**
+   - `MONGO_URI`: String de conexão do MongoDB Atlas
+   - `SECRET_KEY`: Chave secreta forte (gere uma aleatória)
+   - `RENDER`: `true`
+
+2. **Configurações do Render:**
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `python app.py`
+
+3. **Banco de dados:** Use MongoDB Atlas (gratuito) para produção.
 
 ---
 

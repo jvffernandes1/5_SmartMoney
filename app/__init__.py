@@ -282,5 +282,12 @@ def api_cotacoes():
     except Exception as e:
         return {'error': str(e)}, 500
 
+# Configuração para Render
+import os
+if os.environ.get('RENDER'):
+    app.config['DEBUG'] = False
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
+
 if __name__ == '__main__':
     app.run(debug=True)
