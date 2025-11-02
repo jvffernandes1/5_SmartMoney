@@ -58,6 +58,8 @@ function fecharModal() {
     document.getElementById('campos-renda-fixa').style.display = 'none';
     document.getElementById('campos-cripto').style.display = 'none';
     document.getElementById('ticker-acao').value = '';
+    document.getElementById('ticker-acao-custom').value = '';
+    document.getElementById('ticker-acao-custom').style.display = 'none';
     document.getElementById('quantidade-acao').value = '';
     document.getElementById('nome-renda-fixa').value = '';
     document.getElementById('valor-renda-fixa').value = '';
@@ -102,6 +104,9 @@ document.getElementById('tipo-ativo').addEventListener('change', function() {
     // Mostrar campos específicos do tipo selecionado
     if (tipo === 'acao') {
         document.getElementById('campos-acao').style.display = 'block';
+        document.getElementById('ticker-acao').value = '';
+        document.getElementById('ticker-acao-custom').value = '';
+        document.getElementById('ticker-acao-custom').style.display = 'none';
     } else if (tipo === 'renda-fixa') {
         document.getElementById('campos-renda-fixa').style.display = 'block';
     } else if (tipo === 'cripto') {
@@ -109,12 +114,27 @@ document.getElementById('tipo-ativo').addEventListener('change', function() {
     }
 });
 
+// Controle de exibição do campo customizado de ticker
+document.getElementById('ticker-acao').addEventListener('change', function() {
+    const customField = document.getElementById('ticker-acao-custom');
+    if (this.value === 'custom') {
+        customField.style.display = 'block';
+        customField.focus();
+    } else {
+        customField.style.display = 'none';
+        customField.value = '';
+    }
+});
+
 // Função para formatar valores monetários
 function formatarMoeda(valor) {
+    if (valor === null || valor === undefined || Number.isNaN(valor)) {
+        return '—';
+    }
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL'
-    }).format(valor);
+    }).format(Number(valor));
 }
 
 // Função para formatar números cripto
@@ -122,55 +142,143 @@ function formatarCripto(valor) {
     return parseFloat(valor).toFixed(8);
 }
 
-// Função para carregar ativos do localStorage
-function carregarAtivos() {
-    const ativos = JSON.parse(localStorage.getItem('carteira_ativos') || '[]');
-    const listaAtivos = document.getElementById('lista-ativos');
+let carteiraAtivos = [];
+let resumoCarteira = null;
 
-    if (ativos.length === 0) {
-        listaAtivos.innerHTML = '<p style="color: #666; text-align: center; padding: 2rem;">Nenhum ativo adicionado ainda. Adicione seu primeiro ativo acima!</p>';
+const listaAtivosEl = document.getElementById('lista-ativos');
+const loaderAtivosEl = document.getElementById('ativos-loading');
+const adicionarAtivoBtn = document.getElementById('adicionar-ativo');
+
+function definirEstadoCarregamentoAtivos(carregando = true) {
+    if (!loaderAtivosEl) {
         return;
     }
 
-    listaAtivos.innerHTML = ativos.map((ativo, index) => {
+    if (carregando) {
+        loaderAtivosEl.classList.add('is-visible');
+    } else {
+        loaderAtivosEl.classList.remove('is-visible');
+    }
+}
+
+function limparListaAtivos() {
+    if (!listaAtivosEl) {
+        return;
+    }
+    listaAtivosEl.innerHTML = '<p style="color: #666; text-align: center; padding: 2rem;">Nenhum ativo adicionado ainda. Adicione seu primeiro ativo acima!</p>';
+}
+
+function renderizarAtivos() {
+    if (!listaAtivosEl) {
+        return;
+    }
+
+    if (!carteiraAtivos || carteiraAtivos.length === 0) {
+        limparListaAtivos();
+        return;
+    }
+
+    listaAtivosEl.innerHTML = carteiraAtivos.map((ativo) => {
         let detalhes = '';
         let tipoLabel = '';
 
         if (ativo.tipo === 'acao') {
             tipoLabel = 'Ação Nacional';
-            detalhes = `${ativo.ticker} - ${ativo.quantidade} ações`;
+            detalhes = `${ativo.ticker} · ${ativo.quantidade} ações`;
         } else if (ativo.tipo === 'renda-fixa') {
             tipoLabel = 'Renda Fixa';
-            detalhes = `${ativo.nome} - ${formatarMoeda(ativo.valor)}`;
+            detalhes = `${ativo.nome} · ${formatarMoeda(ativo.valor_investido)}`;
         } else if (ativo.tipo === 'cripto') {
             tipoLabel = 'Criptomoeda';
-            detalhes = `${ativo.moeda} - ${formatarCripto(ativo.quantidade)} ${ativo.moeda}`;
+            detalhes = `${ativo.moeda} · ${formatarCripto(ativo.quantidade)} ${ativo.moeda}`;
         }
 
+        const valorAtual = formatarMoeda(ativo.valor_atual);
+        const complementos = [];
+        if (ativo.tipo === 'acao' && ativo.preco_unitario !== undefined) {
+            complementos.push(`Cotação atual: ${formatarMoeda(ativo.preco_unitario)}`);
+        } else if (ativo.tipo === 'cripto' && ativo.preco_unitario !== undefined) {
+            complementos.push(`Cotação atual: ${formatarMoeda(ativo.preco_unitario)}`);
+        } else if (ativo.tipo === 'renda-fixa' && ativo.valor_investido !== undefined) {
+            complementos.push(`Valor aplicado: ${formatarMoeda(ativo.valor_investido)}`);
+        }
+
+        if (ativo.valor_atual_estimado) {
+            complementos.push('Valor estimado com base no aporte');
+        }
+
+        const complementoValor = complementos.length ? complementos.join(' · ') : '';
+
         return `
-            <div style="background: var(--cor-principal); padding: 1rem; border-radius: 6px; margin-bottom: 0.5rem; border: 1px solid var(--cor-destaque); display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <div style="font-weight: bold; color: var(--cor-texto); margin-bottom: 0.25rem;">${tipoLabel}</div>
-                    <div style="color: #666;">${detalhes}</div>
+            <div class="ativo-card">
+                <div class="ativo-info">
+                    <div class="ativo-tipo">${tipoLabel}</div>
+                    <div class="ativo-detalhes">${detalhes}</div>
+                    <div class="ativo-valores">
+                        <span class="ativo-valor-total">${valorAtual}</span>
+                        ${complementoValor ? `<span class="ativo-valor-complemento">${complementoValor}</span>` : ''}
+                    </div>
                 </div>
-                <button onclick="removerAtivo(${index})" style="background: #f44336; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Remover</button>
+                <button class="btn-remover" onclick="removerAtivo('${ativo._id}')">Remover</button>
             </div>
         `;
     }).join('');
 }
 
-// Função para remover ativo
-function removerAtivo(index) {
-    if (confirm('Tem certeza que deseja remover este ativo?')) {
-        const ativos = JSON.parse(localStorage.getItem('carteira_ativos') || '[]');
-        ativos.splice(index, 1);
-        localStorage.setItem('carteira_ativos', JSON.stringify(ativos));
-        carregarAtivos();
+async function carregarAtivos() {
+    if (listaAtivosEl) {
+        definirEstadoCarregamentoAtivos(true);
+        listaAtivosEl.innerHTML = '<p style="color: rgba(220, 215, 201, 0.6); text-align: center; padding: 2rem;">Carregando sua carteira...</p>';
+    }
+    try {
+        const resposta = await fetch('/api/ativos');
+        if (!resposta.ok) {
+            throw new Error('Não foi possível carregar seus ativos.');
+        }
+
+        const dados = await resposta.json();
+        carteiraAtivos = dados.ativos || [];
+        resumoCarteira = dados.resumo || null;
+        atualizarResumoCarteira();
+        renderizarAtivos();
+    } catch (erro) {
+        console.error('Erro ao carregar ativos:', erro);
+        limparListaAtivos();
+        if (listaAtivosEl) {
+            listaAtivosEl.innerHTML = '<p style="color: #f44336; text-align: center; padding: 2rem;">Erro ao carregar sua carteira. Tente novamente mais tarde.</p>';
+        }
+        atualizarResumoCarteira(true);
+    } finally {
+        definirEstadoCarregamentoAtivos(false);
     }
 }
 
+async function removerAtivo(id) {
+    if (!confirm('Tem certeza que deseja remover este ativo?')) {
+        return;
+    }
+
+    definirEstadoCarregamentoAtivos(true);
+    try {
+        const resposta = await fetch(`/api/ativos/${id}`, { method: 'DELETE' });
+        if (!resposta.ok) {
+            throw new Error('Não foi possível remover o ativo.');
+        }
+
+        await carregarAtivos();
+    } catch (erro) {
+        console.error('Erro ao remover ativo:', erro);
+        alert('Ocorreu um erro ao remover o ativo. Tente novamente.');
+    } finally {
+        definirEstadoCarregamentoAtivos(false);
+    }
+}
+
+window.removerAtivo = removerAtivo;
+
 // Adicionar ativo
-document.getElementById('adicionar-ativo').addEventListener('click', function() {
+if (adicionarAtivoBtn) {
+adicionarAtivoBtn.addEventListener('click', async function() {
     const tipo = document.getElementById('tipo-ativo').value;
 
     if (!tipo) {
@@ -182,19 +290,26 @@ document.getElementById('adicionar-ativo').addEventListener('click', function() 
 
     if (tipo === 'acao') {
         const ticker = document.getElementById('ticker-acao').value.toUpperCase();
+        const tickerCustom = document.getElementById('ticker-acao-custom').value.toUpperCase();
         const quantidade = parseInt(document.getElementById('quantidade-acao').value);
 
-        if (!ticker || !quantidade) {
+        const tickerFinal = ticker === 'CUSTOM' ? tickerCustom : ticker;
+
+        if (!tickerFinal || !quantidade) {
             alert('Por favor, preencha o ticker e a quantidade.');
             return;
         }
 
-        novoAtivo.ticker = ticker;
+        novoAtivo.ticker = tickerFinal;
         novoAtivo.quantidade = quantidade;
 
     } else if (tipo === 'renda-fixa') {
         const nome = document.getElementById('nome-renda-fixa').value;
-        const valor = parseFloat(document.getElementById('valor-renda-fixa').value.replace(',', '.'));
+        const valorCampo = document.getElementById('valor-renda-fixa').value;
+        const valorNormalizado = valorCampo
+            .replace(/[R$\.\s]/g, '')
+            .replace(',', '.');
+        const valor = parseFloat(valorNormalizado);
 
         if (!nome || !valor) {
             alert('Por favor, preencha o nome e o valor.');
@@ -202,7 +317,7 @@ document.getElementById('adicionar-ativo').addEventListener('click', function() 
         }
 
         novoAtivo.nome = nome;
-        novoAtivo.valor = valor;
+        novoAtivo.valor_investido = valor;
 
     } else if (tipo === 'cripto') {
         const moeda = document.getElementById('tipo-cripto').value;
@@ -217,19 +332,36 @@ document.getElementById('adicionar-ativo').addEventListener('click', function() 
         novoAtivo.quantidade = quantidade;
     }
 
-    // Salvar no localStorage
-    const ativos = JSON.parse(localStorage.getItem('carteira_ativos') || '[]');
-    ativos.push(novoAtivo);
-    localStorage.setItem('carteira_ativos', JSON.stringify(ativos));
+    const textoOriginal = adicionarAtivoBtn.textContent;
+    adicionarAtivoBtn.textContent = 'Adicionando...';
+    adicionarAtivoBtn.disabled = true;
 
-    // Fechar modal
-    fecharModal();
+    try {
+        const resposta = await fetch('/api/ativos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(novoAtivo)
+        });
 
-    // Recarregar lista
-    carregarAtivos();
+        if (!resposta.ok) {
+            const erro = await resposta.json().catch(() => ({}));
+            throw new Error(erro.error || 'Não foi possível adicionar o ativo.');
+        }
 
-    alert('Ativo adicionado com sucesso!');
+        await carregarAtivos();
+        fecharModal();
+        alert('Ativo adicionado com sucesso!');
+    } catch (erro) {
+        console.error('Erro ao adicionar ativo:', erro);
+        alert(erro.message || 'Não foi possível adicionar o ativo. Tente novamente.');
+    } finally {
+        adicionarAtivoBtn.disabled = false;
+        adicionarAtivoBtn.textContent = textoOriginal;
+    }
 });
+}
 
 // Formatação automática do campo valor renda fixa
 document.getElementById('valor-renda-fixa').addEventListener('input', function(e) {
@@ -245,3 +377,37 @@ document.addEventListener('DOMContentLoaded', buscarCotacoes);
 
 // Carregar ativos ao carregar a página
 document.addEventListener('DOMContentLoaded', carregarAtivos);
+
+function atualizarResumoCarteira(erro = false) {
+    const totalEl = document.getElementById('resumo-total');
+    const quantidadeEl = document.getElementById('resumo-quantidade');
+    const atualizacaoEl = document.getElementById('resumo-atualizacao');
+
+    if (!totalEl || !quantidadeEl || !atualizacaoEl) {
+        return;
+    }
+
+    if (erro || !resumoCarteira) {
+        totalEl.textContent = '—';
+        quantidadeEl.textContent = '0';
+        atualizacaoEl.textContent = '--';
+        return;
+    }
+
+    totalEl.textContent = formatarMoeda(resumoCarteira.total_atual);
+    quantidadeEl.textContent = resumoCarteira.quantidade_ativos || 0;
+
+    if (resumoCarteira.ultima_atualizacao) {
+        const data = new Date(resumoCarteira.ultima_atualizacao);
+        if (!Number.isNaN(data.getTime())) {
+            atualizacaoEl.textContent = new Intl.DateTimeFormat('pt-BR', {
+                dateStyle: 'short',
+                timeStyle: 'short'
+            }).format(data);
+        } else {
+            atualizacaoEl.textContent = '--';
+        }
+    } else {
+        atualizacaoEl.textContent = '--';
+    }
+}

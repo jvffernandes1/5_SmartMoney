@@ -1,6 +1,63 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>Bem-vindo ao Smart Money</h1>
-<p>Gerencie suas finanças pessoais de forma simples e segura.</p>
-<a href="/login">Entrar</a> ou <a href="/register">Cadastrar</a>
+
+<section class="hero">
+	<div class="hero__badge">Smart Money</div>
+	<h1 class="hero__title">Domine suas finanças com clareza e confiança</h1>
+	<p class="hero__subtitle">
+		Centralize receitas, despesas, tendências e investimentos em um único painel inteligente.
+		Acompanhe tudo em tempo real e descubra oportunidades para fazer seu dinheiro render mais.
+	</p>
+	<div class="hero__actions">
+		<a href="{{ url_for('register') }}" class="btn btn-primary">Começar agora</a>
+		<a href="{{ url_for('login') }}" class="btn btn-secondary">Já tenho cadastro</a>
+	</div>
+</section>
+
+<section class="metric-strip">
+	<div class="metric">
+		<span class="metric__value">+15%</span>
+		<span class="metric__label">economia média mensal</span>
+	</div>
+	<div class="metric">
+		<span class="metric__value">100%</span>
+		<span class="metric__label">dados protegidos</span>
+	</div>
+	<div class="metric">
+		<span class="metric__value">24/7</span>
+		<span class="metric__label">cotações em tempo real</span>
+	</div>
+</section>
+
+<section class="feature-grid">
+	<article class="feature-card">
+		<div class="feature-card__icon">📊</div>
+		<h3>Dashboard intuitivo</h3>
+		<p>Visualize suas finanças mês a mês com gráficos comparativos, categorias personalizadas e alertas visuais.</p>
+	</article>
+	<article class="feature-card">
+		<div class="feature-card__icon">🔐</div>
+		<h3>Controle por usuário</h3>
+		<p>Cadastre suas contas, acesse de qualquer dispositivo e mantenha seus dados seguros com autenticação dedicada.</p>
+	</article>
+	<article class="feature-card">
+		<div class="feature-card__icon">📈</div>
+		<h3>Tendências e metas</h3>
+		<p>Identifique padrões de receitas e despesas, descubra gargalos e projete objetivos financeiros assertivos.</p>
+	</article>
+	<article class="feature-card">
+		<div class="feature-card__icon">💹</div>
+		<h3>Investimentos conectados</h3>
+		<p>Monitore ações, cripto e renda fixa com cotações do mercado em tempo real e acompanhe o valor da sua carteira.</p>
+	</article>
+</section>
+
+<section class="cta-banner">
+	<div>
+		<h2>Pronto para transformar sua relação com o dinheiro?</h2>
+		<p>Crie sua conta gratuita, cadastre seus primeiros lançamentos e acompanhe a evolução financeira com um clique.</p>
+	</div>
+	<a href="{{ url_for('register') }}" class="btn btn-light">Criar minha conta</a>
+</section>
+
 {% endblock %}

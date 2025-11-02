@@ -58,6 +58,24 @@
 <!-- Lista de Ativos da Carteira -->
 <div style="background: var(--cor-secundaria); padding: 1.5rem; border-radius: 8px;">
     <h3 style="margin-bottom: 1rem; color: var(--cor-texto);">Sua Carteira de Ativos</h3>
+    <div id="resumo-carteira" class="resumo-carteira">
+        <div class="resumo-card">
+            <span>Total da carteira</span>
+            <strong id="resumo-total">—</strong>
+        </div>
+        <div class="resumo-card">
+            <span>Ativos cadastrados</span>
+            <strong id="resumo-quantidade">0</strong>
+        </div>
+        <div class="resumo-card">
+            <span>Última atualização</span>
+            <strong id="resumo-atualizacao">--</strong>
+        </div>
+    </div>
+    <div id="ativos-loading" class="loading-indicator">
+        <div class="loading-indicator__spinner" aria-hidden="true"></div>
+        <span>Carregando ativos...</span>
+    </div>
     <div id="lista-ativos">
         <p style="color: #666; text-align: center; padding: 2rem;">Nenhum ativo adicionado ainda. Adicione seu primeiro ativo acima!</p>
     </div>
@@ -85,19 +103,28 @@
         <div id="campos-acao" style="display: none;">
             <div style="margin-bottom: 1rem;">
                 <label for="ticker-acao" style="display: block; margin-bottom: 0.5rem; color: var(--cor-texto);">Ticker da Ação:</label>
-                <input type="text" id="ticker-acao" list="tickers-list" placeholder="Ex: PETR4, VALE3, ITUB4..." style="width: 100%; padding: 0.5rem; border: 1px solid var(--cor-destaque); border-radius: 4px; background: var(--cor-principal); color: var(--cor-texto);">
-                <datalist id="tickers-list">
-                    <option value="PETR4">PETR4 - Petrobras</option>
-                    <option value="VALE3">VALE3 - Vale</option>
-                    <option value="ITUB4">ITUB4 - Itaú Unibanco</option>
-                    <option value="BBDC4">BBDC4 - Bradesco</option>
-                    <option value="WEGE3">WEGE3 - WEG</option>
-                    <option value="MGLU3">MGLU3 - Magazine Luiza</option>
-                    <option value="ABEV3">ABEV3 - Ambev</option>
-                    <option value="PETR3">PETR3 - Petrobras ON</option>
-                    <option value="ITSA4">ITSA4 - Itaúsa</option>
-                    <option value="B3SA3">B3SA3 - B3</option>
-                </datalist>
+                <div class="select-wrapper">
+                    <select id="ticker-acao" class="field-select">
+                        <option value="">Selecione o ativo...</option>
+                        <option value="PETR4">PETR4 - Petrobras PN</option>
+                        <option value="PETR3">PETR3 - Petrobras ON</option>
+                        <option value="VALE3">VALE3 - Vale</option>
+                        <option value="ITUB4">ITUB4 - Itaú Unibanco</option>
+                        <option value="BBDC4">BBDC4 - Bradesco</option>
+                        <option value="WEGE3">WEGE3 - WEG</option>
+                        <option value="MGLU3">MGLU3 - Magazine Luiza</option>
+                        <option value="ABEV3">ABEV3 - Ambev</option>
+                        <option value="B3SA3">B3SA3 - B3</option>
+                        <option value="ITSA4">ITSA4 - Itaúsa</option>
+                        <option value="BBAS3">BBAS3 - Banco do Brasil</option>
+                        <option value="GGBR4">GGBR4 - Gerdau</option>
+                        <option value="LREN3">LREN3 - Lojas Renner</option>
+                        <option value="RAIL3">RAIL3 - Rumo</option>
+                        <option value="SUZB3">SUZB3 - Suzano</option>
+                        <option value="custom">Outro ativo...</option>
+                    </select>
+                </div>
+                <input type="text" id="ticker-acao-custom" placeholder="Digite o ticker desejado" class="field-input" style="margin-top: 0.75rem; display: none;">
             </div>
             <div style="margin-bottom: 1rem;">
                 <label for="quantidade-acao" style="display: block; margin-bottom: 0.5rem; color: var(--cor-texto);">Quantidade:</label>

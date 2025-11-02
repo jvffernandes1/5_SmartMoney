@@ -1,12 +1,17 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Cadastrar</h2>
-<form method="post">
+<h2 style="margin-bottom: 1.5rem;">Crie sua conta</h2>
+<form method="post" class="form-card">
+    <label for="name">Nome completo:</label>
+    <input type="text" id="name" name="name" placeholder="Ex.: Ana Souza" required autofocus>
+
     <label for="username">Usuário:</label>
-    <input type="text" id="username" name="username" required autofocus>
+    <input type="text" id="username" name="username" placeholder="Escolha um nome de usuário" required>
+
     <label for="password">Senha:</label>
-    <input type="password" id="password" name="password" required>
-    <input type="submit" value="Cadastrar">
+    <input type="password" id="password" name="password" placeholder="Crie uma senha segura" required>
+
+    <input type="submit" value="Cadastrar" style="margin-top: 1rem;">
 </form>
-<p>Já tem conta? <a href="/login">Entrar</a></p>
+<p style="margin-top: 1.5rem;">Já tem conta? <a href="/login">Entrar</a></p>
 {% endblock %}

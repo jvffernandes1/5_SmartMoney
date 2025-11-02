@@ -21,16 +21,26 @@ Smart Money é uma aplicação web para gestão de finanças pessoais, desenvolv
 
 ## Funcionalidades
 - Cadastro e login de usuários
+- Homepage com visão geral do Smart Money
 - Dashboard de finanças pessoais
 - Lançamento de receitas e despesas
-- Relatórios e gráficos (opcional: análise de dados)
+- Relatórios, gráficos e análises de tendências
+- Carteira de investimentos com cotações em tempo real (yfinance + AwesomeAPI)
 - API para integração
 - Acessibilidade
 
+## Variáveis de Ambiente
+Configure um arquivo `.env` com as chaves abaixo (veja `.env.example`):
+
+- `MONGO_URI`: String de conexão do MongoDB Atlas/Cluster
+- `SECRET_KEY`: Chave secreta para sessões Flask
+- `AWESOME_API_TOKEN`: Token da AwesomeAPI (opcional, usa padrão do projeto)
+
 ## Como rodar o projeto
 1. Instale as dependências: `pip install -r requirements.txt`
-2. Configure o MongoDB (local ou Atlas)
-3. Execute: `flask run`
+2. Configure o MongoDB (local ou Atlas) e o arquivo `.env`
+3. Execute o servidor: `python app.py`
+4. Acesse `http://localhost:5000`
 
 ## Testes
 - Execute `pytest` para rodar os testes automatizados.
